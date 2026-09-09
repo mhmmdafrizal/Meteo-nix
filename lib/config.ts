@@ -1,14 +1,17 @@
 import { Location } from "./types"
 
 export const DEFAULT_LOCATION: Location = {
-  city: "Copenhagen",
+  city: "Jakarta",
   coord: {
-    lat: "55.6760968",
-    lon: "12.5683371",
+    lat: "-6.2088",
+    lon: "106.8456",
   },
 }
 
 export const DEFAULT_SUGGESTIONS = [
+  {
+    description: "Jakarta, Indonesia",
+  },
   {
     description: "London, United Kingdom",
   },

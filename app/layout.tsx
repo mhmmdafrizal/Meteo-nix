@@ -1,9 +1,9 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Script from "next/script"
 import { Analytics } from "@vercel/analytics/react"
 import { NextThemesProvider } from "@/components/providers/NextThemesProvider"
-import { CodeIcon, HeartIcon } from "@radix-ui/react-icons"
+import ServiceWorker from "@/components/ServiceWorker"
+import { GlobeIcon } from "@radix-ui/react-icons"
 import Navigation from "@/components/Navigation"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -33,17 +33,13 @@ export default function RootLayout({
               className="group flex items-center justify-center gap-1 text-neutral-400 dark:text-neutral-600"
               aria-hidden={true}
             >
-              <CodeIcon className="h-5 w-5" />
               <span>with</span>
-              <HeartIcon className="h-4 w-4 group-hover:text-red-500" />
-              <span>in Denmark</span>
+              <GlobeIcon className="h-4 w-4 group-hover:text-sky-500" />
+              <span>always forecasting</span>
             </div>
           </footer>
         </NextThemesProvider>
-        <Script
-          strategy={"beforeInteractive"}
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=Function.prototype`}
-        />
+        <ServiceWorker />
         <Analytics />
       </body>
     </html>

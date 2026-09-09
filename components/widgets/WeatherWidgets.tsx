@@ -1,4 +1,4 @@
-import { AirQualityData, City, HourlyForecastData } from "@/lib/types"
+import { OpenMeteoForecast } from "@/lib/types"
 import {
   Card,
   CardContent,
@@ -9,21 +9,30 @@ import {
 import { Progress } from "../ui/progress"
 import AirPollution from "./AirPollution"
 import Compass from "../ui/compass"
-import { formatSunTimeWithAMPM } from "@/lib/dateUtils"
+import { formatIsoTimeWithAMPM } from "@/lib/dateUtils"
+import { moonPhaseLabel } from "@/lib/weather"
+
+function daylightHours(sunrise: string, sunset: string): string {
+  const start = new Date(sunrise.replace(" ", "T")).getTime()
+  const end = new Date(sunset.replace(" ", "T")).getTime()
+  if (isNaN(start) || isNaN(end)) return ""
+  const hours = Math.floor((end - start) / 3600000)
+  const minutes = Math.round(((end - start) % 3600000) / 60000)
+  return `${hours}h ${minutes}m`
+}
 
 interface WeatherWidgetsProps {
-  data: HourlyForecastData
-  airQuality: AirQualityData
-  uvIndexForToday: number
-  city: City
+  data: OpenMeteoForecast
+  airQuality: number
 }
 
 export default function WeatherWidgets({
   data,
   airQuality,
-  uvIndexForToday,
-  city,
 }: WeatherWidgetsProps) {
+  const { current, daily } = data
+  const tz = data.utc_offset_seconds
+
   return (
     <>
       <AirPollution airQuality={airQuality} className="order-2 md:order-1" />
@@ -66,10 +75,14 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>{formatSunTimeWithAMPM(city.sunset, city.timezone)}</p>
+          <p>{formatIsoTimeWithAMPM(daily.sunset[0], tz)}</p>
         </CardContent>
-        <CardFooter>
-          <p>Sunrise: {formatSunTimeWithAMPM(city.sunrise, city.timezone)}</p>
+        <CardFooter className="flex-col items-start gap-1">
+          <p>Sunrise: {formatIsoTimeWithAMPM(daily.sunrise[0], tz)}</p>
+          <p>
+            Daylight: {daylightHours(daily.sunrise[0], daily.sunset[0])} ·{" "}
+            {moonPhaseLabel(daily.moon_phase[0])}
+          </p>
         </CardFooter>
       </Card>
       <Card className="order-4 h-48 xl:order-3">
@@ -110,7 +123,10 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center p-0">
-          <Compass speed={data.wind.speed} deg={data.wind.deg} />
+          <Compass
+            speed={current.wind_speed_10m}
+            deg={current.wind_direction_10m}
+          />
         </CardContent>
       </Card>
       <Card className="order-5 flex h-48 flex-col justify-between">
@@ -142,23 +158,26 @@ export default function WeatherWidgets({
         </CardHeader>
         <CardContent>
           <p className="mb-2">
-            {Math.round(uvIndexForToday)}
+            {Math.round(daily.uv_index_max[0])}
             <br></br>
-            {uvIndexForToday <= 2
+            {daily.uv_index_max[0] <= 2
               ? "Low"
-              : uvIndexForToday <= 5
+              : daily.uv_index_max[0] <= 5
               ? "Moderate"
-              : uvIndexForToday <= 7
+              : daily.uv_index_max[0] <= 7
               ? "High"
               : "Very High"}
           </p>
-          <Progress aria-label="UV Index" value={uvIndexForToday * 10} />
+          <Progress
+            aria-label="UV Index"
+            value={daily.uv_index_max[0] * 10}
+          />
         </CardContent>
         <CardFooter>
           <p>
-            {uvIndexForToday <= 2
+            {daily.uv_index_max[0] <= 2
               ? "No protection needed."
-              : uvIndexForToday <= 5
+              : daily.uv_index_max[0] <= 5
               ? "Wear sunscreen."
               : "Take precautions."}
           </p>
@@ -241,18 +260,18 @@ export default function WeatherWidgets({
         </CardHeader>
         <CardContent>
           <p>
-            {data.rain?.["1h"] || 0}mm <br></br>in the last 3h
+            {current.precipitation}mm <br></br>this hour
           </p>
         </CardContent>
         <CardFooter>
           <p>
-            {data.rain?.["1h"] !== undefined
-              ? data.rain["1h"] <= 0.2
-                ? "Light rain or drizzle. An umbrella may come in handy."
-                : data.rain["1h"] <= 2.5
-                ? "Moderate rain."
-                : "Heavy rain."
-              : "Conditions are dry."}
+            {current.precipitation <= 0.2
+              ? "Conditions are dry."
+              : current.precipitation <= 2.5
+              ? "Light rain or drizzle. An umbrella may come in handy."
+              : current.precipitation <= 7.5
+              ? "Moderate rain."
+              : "Heavy rain."}
           </p>
         </CardFooter>
       </Card>
@@ -277,13 +296,13 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>{Math.floor(data.main.feels_like)}&deg;</p>
+          <p>{Math.floor(current.apparent_temperature)}&deg;</p>
         </CardContent>
         <CardFooter>
           <p>
-            {data.main.feels_like < data.main.temp
+            {current.apparent_temperature < current.temperature_2m
               ? "Feels colder than the actual temperature."
-              : data.main.feels_like > data.main.temp
+              : current.apparent_temperature > current.temperature_2m
               ? "Feels warmer than the actual temperature."
               : "Feels like the actual temperature."}
           </p>
@@ -310,13 +329,13 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>74&deg;</p>
+          <p>{current.relative_humidity_2m}%</p>
         </CardContent>
         <CardFooter>
           <p>
-            {data.main.humidity < 40
+            {current.relative_humidity_2m < 40
               ? "Low humidity. It might feel dry."
-              : data.main.humidity < 70
+              : current.relative_humidity_2m < 70
               ? "Moderate humidity. Comfortable conditions."
               : "High humidity. It might feel humid and uncomfortable."}
           </p>
@@ -347,13 +366,13 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>{data.visibility / 1000} km</p>
+          <p>{(current.visibility / 1000).toFixed(1)} km</p>
         </CardContent>
         <CardFooter>
           <p>
-            {data.visibility >= 10
+            {current.visibility >= 10000
               ? "It's perfectly clear right now."
-              : data.visibility >= 5
+              : current.visibility >= 5000
               ? "Good visibility."
               : "Poor visibility. Exercise caution while driving or moving around."}
           </p>
@@ -381,13 +400,13 @@ export default function WeatherWidgets({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p>{data.main.pressure} hPa</p>
+          <p>{Math.round(current.pressure_msl)} hPa</p>
         </CardContent>
         <CardFooter>
           <p>
-            {data.main.pressure < 1000
+            {current.pressure_msl < 1000
               ? "Low pressure. Expect changes in the weather."
-              : data.main.pressure >= 1000 && data.main.pressure <= 1010
+              : current.pressure_msl <= 1010
               ? "Normal pressure. Typical weather conditions."
               : "High pressure. Expect stable and clear weather."}
           </p>

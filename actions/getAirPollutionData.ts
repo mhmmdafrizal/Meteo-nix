@@ -1,16 +1,19 @@
+import { AirPollutionResponse } from "@/lib/types"
+
 export const getAirPollutionData = async ({
   lat,
   lon,
 }: {
   lat: string
   lon: string
-}) => {
-  const data = await fetch(
-    `https://${process.env.VERCEL_URL}/api/weather/air_pollution?lat=${lat}&lon=${lon}&appid=${process.env.NEXT_PUBLIC_OPEN_WEATHER_API_KEY}`
+}): Promise<AirPollutionResponse> => {
+  const res = await fetch(
+    `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi&timezone=auto`,
+    { next: { revalidate: 900 } }
   )
-  if (!data.ok) {
+  if (!res.ok) {
     throw new Error("Failed to fetch data")
   }
 
-  return data.json()
+  return res.json()
 }

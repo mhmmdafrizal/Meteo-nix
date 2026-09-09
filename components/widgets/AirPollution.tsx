@@ -7,12 +7,11 @@ import {
   CardTitle,
 } from "../ui/card"
 import { Progress } from "../ui/progress"
-import { AirQualityData } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ClassNameValue } from "tailwind-merge"
 
 interface AirPollutionProps {
-  airQuality: AirQualityData
+  airQuality: number
   className?: ClassNameValue
 }
 
@@ -76,19 +75,19 @@ export default function AirPollution({
         </CardTitle>
       </CardHeader>
       <CardContent className="my-auto">
-        <Progress aria-label="Air pollution" value={airQuality.main.aqi * 10} />
+        <Progress aria-label="Air pollution" value={airQuality} />
       </CardContent>
       <CardFooter>
         <p>
-          {airQuality.main.aqi < 50
+          {airQuality < 20
             ? "Air quality is good."
-            : airQuality.main.aqi < 100
+            : airQuality < 40
             ? "Air quality is moderate."
-            : airQuality.main.aqi < 150
+            : airQuality < 60
             ? "Air quality is unhealthy for sensitive groups."
-            : airQuality.main.aqi < 200
+            : airQuality < 80
             ? "Air quality is unhealthy."
-            : airQuality.main.aqi < 300
+            : airQuality < 100
             ? "Air quality is very unhealthy."
             : "Air quality is hazardous."}
         </p>
