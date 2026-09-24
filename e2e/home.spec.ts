@@ -8,6 +8,10 @@ test.describe("Homepage", () => {
     await expect(page.getByText("Search city...")).toBeVisible()
     // wait for the server-fetched current conditions card
     await expect(page.getByText("Jakarta").first()).toBeVisible({ timeout: 30_000 })
+    // maplibre canvas mounts client-side
+    await expect(page.locator(".maplibregl-canvas")).toBeVisible({
+      timeout: 30_000,
+    })
   })
 
   test("shows current temperature and high/low", async ({ page }) => {
