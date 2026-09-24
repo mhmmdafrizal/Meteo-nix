@@ -49,6 +49,41 @@ Lint:
 npx eslint .
 ```
 
+## npm Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint via Next.js |
+| `npm run test:e2e` | Run Playwright end-to-end tests |
+| `npm run knip` | Find unused dependencies/files/exports |
+
+## Testing
+
+End-to-end tests use [Playwright](https://playwright.dev) and run against a dev server on port `3100` (a port already taken on this machine — e.g. another app on `3000` — won't interfere):
+
+```bash
+npm run test:e2e
+```
+
+First run downloads the Chromium browser:
+
+```bash
+npx playwright install chromium
+```
+
+## Code Hygiene
+
+[Knip](https://knip.dev) reports unused dependencies, files, and exports:
+
+```bash
+npm run knip
+```
+
+Known false positives: `public/sw.js` is registered by `components/ServiceWorker.tsx` via a runtime string, and unused shadcn/ui exports are kept intentionally as component API surface.
+
 ## Environment Variables
 
 None required. All data sources are keyless; `.env.local` is reserved for future use.
